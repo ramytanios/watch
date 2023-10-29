@@ -1,0 +1,2 @@
+compile:
+	scala-cli compile .
