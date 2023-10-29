@@ -1,29 +1,30 @@
 package main
 
-import com.monovore.decline.effect.CommandIOApp
 import cats.effect.ExitCode
 import cats.effect.IO
-import cats.effect.Temporal
 import cats.effect.Resource
+import cats.effect.Temporal
+import cats.effect.kernel.Outcome
+import cats.effect.std.Console
+import cats.effect.syntax.all._
+import cats.syntax.all._
 import com.monovore.decline.Opts
+import com.monovore.decline.effect.CommandIOApp
+import fs2.concurrent.SignallingRef
 import fs2.io.file.Files
 import fs2.io.file.Path
-import cats.effect.std.Console
-import scala.concurrent.duration._
-import cats.effect.syntax.all._
-import fs2.concurrent.SignallingRef
-import cats.syntax.all._
-import fs2.io.process.Processes
-import fs2.io.process.ProcessBuilder
 import fs2.io.process
-import cats.effect.kernel.Outcome
+import fs2.io.process.ProcessBuilder
+import fs2.io.process.Processes
+import scala.cli.build.BuildInfo
+import scala.concurrent.duration._
 import scala.io.AnsiColor
 
 object Main
     extends CommandIOApp(
       name = "watch-and-execute",
       header = "Watch and execute command",
-      version = "0.0.1"
+      version = BuildInfo.projectVersion.getOrElse("NA")
     ) {
 
   case class Cli(
@@ -76,10 +77,12 @@ object Main
       cli: Cli
   ): Resource[F, Unit] =
     Console[F]
-      .print(s"""|👀 Started watching path ${cli.path} with following settings:
+      .print(
+        s"""|👀 Started watching path ${cli.path} with following settings:
       |${AnsiColor.CYAN}Path: ${cli.path}
       |Command: `${cli.cmd}`
-      |${AnsiColor.CYAN}Throttling: ${cli.throttling}${AnsiColor.RESET}\n""".stripMargin)
+      |${AnsiColor.CYAN}Throttling: ${cli.throttling}${AnsiColor.RESET}\n""".stripMargin
+      )
       .toResource *>
       cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
         fs2.Stream
