@@ -1,5 +1,4 @@
-# watch-and-execute
-A simple command line tool for watching a specific directory and 
+A simple `watch` command line tool for watching a specific directory and 
 (re)-executing a specific command on every change, with possible throttling. ⚡
 
 Using [Scala-CLI](https://scala-cli.virtuslab.org/) as build tool. ✅
@@ -19,5 +18,9 @@ make compile
 make package
 ```
 
-
+# Example using 
+```bash
+# Watch the directtory `test_dir/` and exectude the `ls` command
+watch --path test_dir --cmd ls
+```
 
