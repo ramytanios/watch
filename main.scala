@@ -9,14 +9,15 @@ import com.monovore.decline.Opts
 import fs2.io.file.Files
 import fs2.io.file.Path
 import cats.effect.std.Console
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import cats.effect.implicits._
+import cats.effect.syntax.all._
 import fs2.concurrent.SignallingRef
 import cats.syntax.all._
 import fs2.io.process.Processes
 import fs2.io.process.ProcessBuilder
 import fs2.io.process
-import cats.data.NonEmptyList
+import cats.effect.kernel.Outcome
 
 object Main
     extends CommandIOApp(
@@ -26,9 +27,9 @@ object Main
     ) {
 
   case class Cli(
-      paths: NonEmptyList[Path],
+      path: Path,
       cmd: String,
-      throttling: Option[FiniteDuration]
+      throttling: FiniteDuration
   )
 
   trait PathWatcher[F[_]] {
@@ -75,5 +76,44 @@ object Main
       cmd: String
   ): Resource[F, process.Process[F]] = ProcessBuilder(cmd, Nil).spawn
 
-  override def main: Opts[IO[ExitCode]] = ???
+  def run[F[_]: Processes: Temporal: Files: Console](
+      cli: Cli
+  ): Resource[F, Unit] =
+    cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
+      fs2.Stream
+        .emit(cli.path)
+        .covary[F]
+        .flatMap(Files[F].walk(_))
+        .parEvalMapUnordered(16)(path =>
+          PathWatcher(path, cli.throttling)
+            .use(_.changes.evalMap(queue.offer(_)).compile.drain)
+        )
+        .concurrently(
+          fs2.Stream
+            .fromQueueUnterminated(queue)
+            .debounce(cli.throttling)
+            .evalMap(_ => execCommand(cli.cmd).use_)
+        )
+        .compile
+        .drain
+        .background
+        .as(())
+    }
+
+  override def main: Opts[IO[ExitCode]] =
+
+    val path = Opts
+      .option[String]("path", "Path to watch")
+      .map(Path(_))
+
+    val cmd = Opts.option[String]("cmd", "Command to execute")
+
+    val throttling = Opts
+      .option[Int]("wait", "Wait before execute (ms)")
+      .withDefault(1000)
+      .map(_.milliseconds)
+
+    val cli = (path, cmd, throttling).mapN(Cli.apply)
+
+    cli.map(run[IO](_).useForever.as(ExitCode.Success))
 }
