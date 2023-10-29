@@ -10,7 +10,6 @@ import fs2.io.file.Files
 import fs2.io.file.Path
 import cats.effect.std.Console
 import scala.concurrent.duration._
-import cats.effect.implicits._
 import cats.effect.syntax.all._
 import fs2.concurrent.SignallingRef
 import cats.syntax.all._
@@ -72,10 +71,6 @@ object Main
       }
   }
 
-  def execCommand[F[_]: Processes](
-      cmd: String
-  ): Resource[F, process.Process[F]] = ProcessBuilder(cmd, Nil).spawn
-
   def run[F[_]: Processes: Temporal: Files: Console](
       cli: Cli
   ): Resource[F, Unit] =
@@ -92,7 +87,11 @@ object Main
           fs2.Stream
             .fromQueueUnterminated(queue)
             .debounce(cli.throttling)
-            .evalMap(_ => execCommand(cli.cmd).use_)
+            .evalMap(_ =>
+              Console[F].print(
+                s"Executing command ${cli.cmd}"
+              ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_
+            )
         )
         .compile
         .drain
