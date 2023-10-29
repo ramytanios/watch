@@ -4,7 +4,7 @@ A simple command line tool for watching a specific directory and
 
 ✔️ Using [Scala-CLI](https://scala-cli.virtuslab.org/) as build tool.
 
-✔️ Uased on the Scala  [typlevel](https://typelevel.org/) stack.
+✔️ UBased on the Scala  [typlevel](https://typelevel.org/) stack.
 
 # Motivation
 [Smithy](https://smithy.io/2.0/index.html) is a a great Interface Definition Language. [Smithy4s](https://disneystreaming.github.io/smithy4s/) is a codegen for generating Scala code based on Smithy files.
