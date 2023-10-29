@@ -19,6 +19,7 @@ import fs2.io.process.Processes
 import scala.cli.build.BuildInfo
 import scala.concurrent.duration._
 import scala.io.AnsiColor
+import cats.MonadThrow
 
 object Main
     extends CommandIOApp(
@@ -73,22 +74,32 @@ object Main
       }
   }
 
-  def run[F[_]: Processes: Temporal: Files: Console](
+  def run[F[_]: Processes: Temporal: Files: Console: MonadThrow](
       cli: Cli
   ): Resource[F, Unit] =
     Console[F]
       .print(
-        s"""|👀 Started watching path ${cli.path} with following settings:
-      |${AnsiColor.CYAN}Path: ${cli.path}
-      |Command: `${cli.cmd}`
-      |${AnsiColor.CYAN}Throttling: ${cli.throttling}${AnsiColor.RESET}\n""".stripMargin
+        s"""|👀 Started watching path ${cli.path} with following with settings:
+      |👉${AnsiColor.CYAN}Path: ${cli.path}
+      |👉Command: `${cli.cmd}`
+      |👉${AnsiColor.CYAN}Throttling: ${cli.throttling}${AnsiColor.RESET}\n""".stripMargin
       )
       .toResource *>
       cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
         fs2.Stream
           .emit(cli.path)
           .covary[F]
-          .flatMap(Files[F].walk(_))
+          .flatMap(
+            Files[F]
+              .walk(_)
+              .onError(err =>
+                fs2.Stream.eval(
+                  Console[F].errorln(
+                    s"${AnsiColor.RED}Error: ${err.getMessage}${AnsiColor.RESET}"
+                  )
+                )
+              )
+          )
           .parEvalMapUnordered(16)(path =>
             PathWatcher(path, cli.throttling)
               .use(_.changes.evalMap(queue.offer(_)).compile.drain)
@@ -99,7 +110,7 @@ object Main
               .debounce(cli.throttling)
               .evalMap(_ =>
                 Console[F].print(
-                  s"💻Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
+                  s"💻 Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
                 ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_
               )
           )
@@ -118,7 +129,7 @@ object Main
     val cmd = Opts.option[String]("cmd", "Command to execute")
 
     val throttling = Opts
-      .option[Int]("wait", "Wait before execute (ms)")
+      .option[Int]("wait", "Wait before execution (ms)")
       .withDefault(1000)
       .map(_.milliseconds)
 
