@@ -17,6 +17,7 @@ import fs2.io.process.Processes
 import fs2.io.process.ProcessBuilder
 import fs2.io.process
 import cats.effect.kernel.Outcome
+import scala.io.AnsiColor
 
 object Main
     extends CommandIOApp(
@@ -74,30 +75,36 @@ object Main
   def run[F[_]: Processes: Temporal: Files: Console](
       cli: Cli
   ): Resource[F, Unit] =
-    cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
-      fs2.Stream
-        .emit(cli.path)
-        .covary[F]
-        .flatMap(Files[F].walk(_))
-        .parEvalMapUnordered(16)(path =>
-          PathWatcher(path, cli.throttling)
-            .use(_.changes.evalMap(queue.offer(_)).compile.drain)
-        )
-        .concurrently(
-          fs2.Stream
-            .fromQueueUnterminated(queue)
-            .debounce(cli.throttling)
-            .evalMap(_ =>
-              Console[F].print(
-                s"Executing command ${cli.cmd}"
-              ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_
-            )
-        )
-        .compile
-        .drain
-        .background
-        .as(())
-    }
+    Console[F]
+      .print(s"""|👀 Started watching path ${cli.path} with following settings:
+      |${AnsiColor.CYAN}Path: ${cli.path}
+      |Command: `${cli.cmd}`
+      |${AnsiColor.CYAN}Throttling: ${cli.throttling}${AnsiColor.RESET}\n""".stripMargin)
+      .toResource *>
+      cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
+        fs2.Stream
+          .emit(cli.path)
+          .covary[F]
+          .flatMap(Files[F].walk(_))
+          .parEvalMapUnordered(16)(path =>
+            PathWatcher(path, cli.throttling)
+              .use(_.changes.evalMap(queue.offer(_)).compile.drain)
+          )
+          .concurrently(
+            fs2.Stream
+              .fromQueueUnterminated(queue)
+              .debounce(cli.throttling)
+              .evalMap(_ =>
+                Console[F].print(
+                  s"💻Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
+                ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_
+              )
+          )
+          .compile
+          .drain
+          .background
+          .as(())
+      }
 
   override def main: Opts[IO[ExitCode]] =
 
