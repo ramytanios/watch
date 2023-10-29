@@ -111,7 +111,7 @@ object Main
               .evalMap(_ =>
                 Console[F].print(
                   s"💻 Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
-                ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_
+                ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_ // TODO: stream std out
               )
           )
           .compile
