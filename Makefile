@@ -6,7 +6,7 @@ compile:
 		--build-info
 
 # For testing purposes, changed if needed ⚠️
-PATH_ARG := test/
+PATH_ARG := test_dir/
 # For testing purposes, change if needed ⚠️
 CMD_ARG := ls
 run: 
