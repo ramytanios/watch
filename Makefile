@@ -31,7 +31,8 @@ run:
 	scala-cli --power run . \
 		--build-info \
 		-- \
-		--path $(PATH_ARG) \
-		--cmd $(CMD_ARG)
+		-p $(PATH_ARG) \
+		-c $(CMD_ARG) \
+		-d 2000
 
 

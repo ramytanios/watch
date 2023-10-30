@@ -31,7 +31,7 @@ object Main
   case class Cli(
       path: Path,
       cmd: String,
-      throttling: FiniteDuration
+      debouneRate: FiniteDuration
   )
 
   trait PathWatcher[F[_]] {
@@ -79,10 +79,10 @@ object Main
   ): Resource[F, Unit] =
     Console[F]
       .print(
-        s"""|👀 Started watching path ${cli.path} with following with settings:
-      |👉${AnsiColor.CYAN}Path: ${cli.path}
+        s"""|👀 Started watching path ${cli.path} with following with settings:${AnsiColor.CYAN}
+      |👉Path: ${cli.path}
       |👉Command: `${cli.cmd}`
-      |👉${AnsiColor.CYAN}Throttling: ${cli.throttling}${AnsiColor.RESET}\n""".stripMargin
+      |👉Throttling: ${cli.debouneRate}${AnsiColor.RESET}\n""".stripMargin
       )
       .toResource *>
       cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
@@ -101,17 +101,31 @@ object Main
               )
           )
           .parEvalMapUnordered(16)(path =>
-            PathWatcher(path, cli.throttling)
+            PathWatcher(path, cli.debouneRate)
               .use(_.changes.evalMap(queue.offer(_)).compile.drain)
           )
           .concurrently(
             fs2.Stream
               .fromQueueUnterminated(queue)
-              .debounce(cli.throttling)
+              .debounce(cli.debouneRate)
               .evalMap(_ =>
                 Console[F].print(
                   s"💻 Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
-                ) *> ProcessBuilder(cli.cmd, Nil).spawn.use_ // TODO: stream std out
+                ) *> ProcessBuilder(cli.cmd, Nil).spawn
+                  .use(proc =>
+                    proc.stdout
+                      .through(fs2.text.utf8.decode)
+                      .through(fs2.text.lines)
+                      .evalMap(Console[F].println)
+                      .concurrently(
+                        proc.stderr
+                          .through(fs2.text.utf8.decode)
+                          .through(fs2.text.lines)
+                          .evalMap(Console[F].errorln)
+                      )
+                      .compile
+                      .drain
+                  )
               )
           )
           .compile
@@ -123,17 +137,17 @@ object Main
   override def main: Opts[IO[ExitCode]] =
 
     val path = Opts
-      .option[String]("path", "Path to watch")
+      .option[String]("path", "Path to watch", "p")
       .map(Path(_))
 
-    val cmd = Opts.option[String]("cmd", "Command to execute")
+    val cmd = Opts.option[String]("command", "Command to execute", "c")
 
-    val throttling = Opts
-      .option[Int]("wait", "Wait before execution (ms)")
+    val debouneRate = Opts
+      .option[Int]("debounce-rate", "Wait before execution (ms)", "d")
       .withDefault(1000)
       .map(_.milliseconds)
 
-    val cli = (path, cmd, throttling).mapN(Cli.apply)
+    val cli = (path, cmd, debouneRate).mapN(Cli.apply)
 
     cli.map(run[IO](_).useForever.as(ExitCode.Success))
 }
