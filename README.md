@@ -23,4 +23,5 @@ make package
 # Watch the directtory `test_dir/` and exectude the `ls` command
 watch --path test_dir --cmd ls
 ```
-
+# TODO
+Setup using [Nix](https://nixos.org/)
