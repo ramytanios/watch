@@ -20,6 +20,7 @@ import scala.cli.build.BuildInfo
 import scala.concurrent.duration._
 import scala.io.AnsiColor
 import cats.MonadThrow
+import cats.data.NonEmptyList
 
 object Main
     extends CommandIOApp(
@@ -31,6 +32,7 @@ object Main
   case class Cli(
       path: Path,
       cmd: String,
+      args: Option[NonEmptyList[String]],
       debouneRate: FiniteDuration
   )
 
@@ -81,7 +83,8 @@ object Main
       .print(
         s"""|👀 Started watching path ${cli.path} with following with settings:${AnsiColor.CYAN}
       |👉Path: ${cli.path}
-      |👉Command: `${cli.cmd}`
+      |👉Command: ${cli.cmd}
+      |👉Args: ${cli.args.map(_.toList.mkString(" ")).getOrElse("None")}
       |👉Throttling: ${cli.debouneRate}${AnsiColor.RESET}\n""".stripMargin
       )
       .toResource *>
@@ -111,7 +114,10 @@ object Main
               .evalMap(_ =>
                 Console[F].print(
                   s"💻 Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
-                ) *> ProcessBuilder(cli.cmd, Nil).spawn
+                ) *> ProcessBuilder(
+                  cli.cmd,
+                  cli.args.map(_.toList).orEmpty
+                ).spawn
                   .use(proc =>
                     proc.stdout
                       .through(fs2.text.utf8.decode)
@@ -142,12 +148,14 @@ object Main
 
     val cmd = Opts.option[String]("command", "Command to execute", "c")
 
+    val args = Opts.options[String]("args", "Args of command", "a").orNone
+
     val debouneRate = Opts
       .option[Int]("debounce-rate", "Wait before execution (ms)", "d")
       .withDefault(1000)
       .map(_.milliseconds)
 
-    val cli = (path, cmd, debouneRate).mapN(Cli.apply)
+    val cli = (path, cmd, args, debouneRate).mapN(Cli.apply)
 
     cli.map(run[IO](_).useForever.as(ExitCode.Success))
 }
