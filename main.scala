@@ -33,7 +33,7 @@ object Main
       path: Path,
       cmd: String,
       args: Option[NonEmptyList[String]],
-      debouneRate: FiniteDuration
+      debounceRate: FiniteDuration
   )
 
   trait PathWatcher[F[_]] {
@@ -83,9 +83,11 @@ object Main
       .print(
         s"""|👀 Started watching path ${cli.path} with following with settings:${AnsiColor.CYAN}
       |👉Path: ${cli.path}
-      |👉Command: ${cli.cmd}
+      |👉Command: ${cli.cmd} ${cli.args
+             .map(_.toList.mkString(" "))
+             .getOrElse("")}
       |👉Args: ${cli.args.map(_.toList.mkString(" ")).getOrElse("None")}
-      |👉Throttling: ${cli.debouneRate}${AnsiColor.RESET}\n""".stripMargin
+      |👉Throttling: ${cli.debounceRate}${AnsiColor.RESET}\n""".stripMargin
       )
       .toResource *>
       cats.effect.std.Queue.unbounded[F, Unit].toResource.flatMap { queue =>
@@ -104,13 +106,13 @@ object Main
               )
           )
           .parEvalMapUnordered(16)(path =>
-            PathWatcher(path, cli.debouneRate)
+            PathWatcher(path, cli.debounceRate)
               .use(_.changes.evalMap(queue.offer(_)).compile.drain)
           )
           .concurrently(
             fs2.Stream
               .fromQueueUnterminated(queue)
-              .debounce(cli.debouneRate)
+              .debounce(cli.debounceRate)
               .evalMap(_ =>
                 Console[F].print(
                   s"💻 Executing command ${AnsiColor.MAGENTA}`${cli.cmd}`${AnsiColor.RESET}\n"
@@ -150,12 +152,12 @@ object Main
 
     val args = Opts.options[String]("args", "Args of command", "a").orNone
 
-    val debouneRate = Opts
+    val debounceRate = Opts
       .option[Int]("debounce-rate", "Wait before execution (ms)", "d")
       .withDefault(1000)
       .map(_.milliseconds)
 
-    val cli = (path, cmd, args, debouneRate).mapN(Cli.apply)
+    val cli = (path, cmd, args, debounceRate).mapN(Cli.apply)
 
     cli.map(run[IO](_).useForever.as(ExitCode.Success))
 }
