@@ -8,13 +8,29 @@ on:
 
 jobs:
   build:
-    name: scala-cli-setup-action
+    name: Build app
+    strategy: 
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include: 
+          -os: ubuntu-latest
+          release_suffix: linux 
+          -os: macos-latest
+          release_suffix: macos
     
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     
     steps:
-    - uses: actions/checkout@v3
-    - uses: VirtusLab/scala-cli-setup@v1.0.5
+    - name: Git checkout 
+      uses: actions/checkout@v3
+
+    - name: Install scala-cli
+      uses: VirtusLab/scala-cli-setup@v1.0.5
       with: 
         power: true
-    - run: scala-cli package . --build-info -o fs2-watch
+
+    - name: Compile
+      run: scala-cli compile . --build-info
+
+    - name: Package
+      run: scala-cli package . --build-info -o fs2-watch
