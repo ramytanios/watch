@@ -13,10 +13,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         include: 
-          -os: ubuntu-latest
-          release_suffix: linux 
-          -os: macos-latest
-          release_suffix: macos
+          - os: ubuntu-latest
+            release_suffix: linux 
+          - os: macos-latest
+            release_suffix: macos
     
     runs-on: ${{ matrix.os }}
     
