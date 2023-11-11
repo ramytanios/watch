@@ -25,12 +25,8 @@ jobs:
     - name: Package
       run: scala-cli package . --build-info --standalone -o fs2-watch
 
-    - name: Upload
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./tmux-fingers
-        asset_name: fs2-watch-${{ github.event.release.tag_name }}-linux-x86_64
-        asset_content_type: binary/octet-stream
+        files: fs2-watch
