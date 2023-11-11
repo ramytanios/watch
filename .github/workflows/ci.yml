@@ -25,7 +25,7 @@ jobs:
     - name: Package
       run: scala-cli package . --build-info --standalone -o fs2-watch
 
-    - name: Release
-      uses: softprops/action-gh-release@v1
+    - uses: ncipollo/release-action@v1
       with:
-        files: fs2-watch
+        artifacts: "release.tar.gz,foo/*.txt"
+        # bodyFile: "body.md"
