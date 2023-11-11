@@ -1,8 +1,8 @@
 name: Deployment
 
 on:  
-push:
-  tags:
+  push:
+    tags:
     - '*'
 
 jobs:
@@ -31,4 +31,5 @@ jobs:
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "fs2-watch-linux-x86_64.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
         # bodyFile: "body.md"
