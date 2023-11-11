@@ -1,4 +1,4 @@
-name: Makefile CI
+name: Deployment
 
 on:
   push:
@@ -7,18 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-    name: Build app
-    strategy: 
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        include: 
-          - os: ubuntu-latest
-            release_suffix: linux 
-          - os: macos-latest
-            release_suffix: macos
-    
-    runs-on: ${{ matrix.os }}
+  dist_linux:
+    runs-on: ubuntu-latest
     
     steps:
     - name: Git checkout 
@@ -33,4 +23,14 @@ jobs:
       run: scala-cli compile . --build-info
 
     - name: Package
-      run: scala-cli package . --build-info -o fs2-watch
+      run: scala-cli package . --build-info --standalone -o fs2-watch
+
+    - name: Upload
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./tmux-fingers
+        asset_name: fs2-watch-${{ github.event.release.tag_name }}-linux-x86_64
+        asset_content_type: binary/octet-stream
