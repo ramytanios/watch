@@ -26,7 +26,6 @@ jobs:
 
     - name: Zip
       run: zip -rj fs2-watch-linux-x86_64.zip fs2-watch
-      run: (ls x.txt && echo yes) || echo no
 
     - uses: ncipollo/release-action@v1
       with:
