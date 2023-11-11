@@ -1,10 +1,9 @@
 name: Deployment
 
-on:
-  on:  
-  push:
-    tags:
-      - '*'
+on:  
+push:
+  tags:
+    - '*'
 
 jobs:
   dist_linux:
