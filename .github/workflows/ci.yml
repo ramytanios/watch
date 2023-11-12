@@ -4,10 +4,19 @@ on:
   push:
     tags:
     - '*'
+    branches:
+      - main
 
 jobs:
-  dist_linux:
-    runs-on: ubuntu-latest
+  dist:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            release_suffix: linux
+          - os: macos-latest
+            release_suffix: macos
     
     steps:
     - name: Git checkout 
@@ -25,10 +34,10 @@ jobs:
       run: scala-cli package . --build-info --standalone -o fs2-watch
 
     - name: Zip
-      run: zip -rj fs2-watch-linux-x86_64.zip fs2-watch
+      run: zip -rj fs2-watch-${{ matrix.release_suffix }}.zip fs2-watch
 
     - uses: ncipollo/release-action@v1
       with:
-        artifacts: "fs2-watch-linux-x86_64.zip"
+        artifacts: fs2-watch-${{ matrix.release_suffix }}.zip
+        generateReleaseNotes: true
         token: ${{ secrets.GITHUB_TOKEN }}
-        # bodyFile: "body.md"
