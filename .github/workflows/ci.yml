@@ -4,8 +4,6 @@ on:
   push:
     tags:
     - '*'
-    branches:
-      - main
 
 jobs:
   dist:
@@ -15,8 +13,10 @@ jobs:
         include:
           - os: ubuntu-latest
             release_suffix: linux
+            upload: true
           - os: macos-latest
             release_suffix: macos
+            upload: false
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -37,7 +37,9 @@ jobs:
     - name: Zip
       run: zip -rj fs2-watch-${{ matrix.release_suffix }}.zip fs2-watch
 
-    - uses: ncipollo/release-action@v1
+    - name: Release
+      if: matrix.upload
+      uses: ncipollo/release-action@v1
       with:
         artifacts: fs2-watch-${{ matrix.release_suffix }}.zip
         generateReleaseNotes: true
