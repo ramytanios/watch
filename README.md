@@ -11,17 +11,9 @@ It is certainly tedious to manually regenerate the Scala code on each smithy fil
 
 👉Watching the `.smithy` files and regenerate the corresponding Scala code programatically is certainly more idiomatic.
 
-# Package 
-Package as a lightweight launcher JAR:
+# Example usage
 ```bash
-make compile 
-make package
+# Watch the directory `test_dir/` and exectude the `ls` command
+mkdir test_dir
+watch --path test_dir --cmd ls --arg la
 ```
-
-# Example using 
-```bash
-# Watch the directtory `test_dir/` and exectude the `ls` command
-watch --path test_dir --cmd ls
-```
-# TODO
-Setup using [Nix](https://nixos.org/)
