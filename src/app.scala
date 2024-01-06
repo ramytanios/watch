@@ -2,6 +2,7 @@ package watch
 
 import cats.data.NonEmptyList
 import cats.effect.*
+import cats.effect.std.*
 import cats.effect.syntax.all.*
 import cats.syntax.all._
 import com.monovore.decline.*
@@ -11,7 +12,6 @@ import fs2.io.file.*
 import fs2.io.process
 import fs2.io.process.*
 
-import cats.effect.std.*
 import scala.concurrent.duration.*
 import scala.io.AnsiColor
 
@@ -133,12 +133,10 @@ class AppImpl[F[_]: Processes: Temporal: Files: Console] {
           .as(())
 }
 
-
 object Main
     extends CommandIOApp(
-      name = "watch-and-execute",
-      header = "Watch and execute command",
-      version = "NA"
+      name = "watch",
+      header = "Watch a directory and execute a command on change."
     ):
 
   val path = Opts
