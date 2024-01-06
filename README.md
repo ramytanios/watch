@@ -9,7 +9,7 @@ Based on the Scala  [typelevel](https://typelevel.org/) stack. ✅
 [Smithy](https://smithy.io/2.0/index.html) is a a great Interface Definition Language. [Smithy4s](https://disneystreaming.github.io/smithy4s/) is a codegen for generating Scala code based on Smithy files.
 It is certainly tedious to manually regenerate the Scala code on each smithy file change.
 
-👉Watching the `.smihty` files and regenerate the corresponding Scala code programatically is certainly more idiomatic.
+👉Watching the `.smithy` files and regenerate the corresponding Scala code programatically is certainly more idiomatic.
 
 # Package 
 Package as a lightweight launcher JAR:
