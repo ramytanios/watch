@@ -1,9 +1,9 @@
 {
   description = "Watch command line tool";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     typelevel-nix.url = "github:typelevel/typelevel-nix";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.follows = "typelevel-nix/nixpkgs";
+    flake-utils.follows = "typelevel-nix/flake-utils";
   };
 
   outputs = { self, nixpkgs, typelevel-nix, flake-utils }:
@@ -19,7 +19,7 @@
           name = "watch-shell";
           typelevelShell = {
             jdk.package = pkgs.jdk;
-            nodejs.enable = true;
+            nodejs.enable = false;
             native.enable = true;
             native.libraries = [ pkgs.zlib pkgs.s2n-tls pkgs.openssl ];
           };
