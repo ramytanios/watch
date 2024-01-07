@@ -21,7 +21,7 @@
             jdk.package = pkgs.jdk;
             nodejs.enable = false;
             native.enable = true;
-            native.libraries = [ pkgs.zlib pkgs.s2n-tls pkgs.openssl ];
+            native.libraries = with pkgs; [ zlib s2n-tls openssl ];
           };
           packages = with pkgs; [ which ];
         };
