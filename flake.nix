@@ -14,7 +14,7 @@
           overlays = [ typelevel-nix.overlay ];
         };
       in {
-        devShells = pkgs.devshell.mkShell {
+        devShell = pkgs.devshell.mkShell {
           imports = [ typelevel-nix.typelevelShell ];
           name = "watch-shell";
           typelevelShell = {
