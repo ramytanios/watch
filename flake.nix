@@ -38,7 +38,7 @@
         in {
           default = pkgs.devshell.mkShell {
             imports = [ typelevel-nix.typelevelShell ];
-            name = "watch-dev-shell";
+            name = "${pname}-dev-shell";
             typelevelShell = {
               jdk.package = pkgs.jdk;
               nodejs.enable = false;
