@@ -1,29 +1,71 @@
 {
-  description = "Watch command line tool";
+  description = "Hello world Scala app";
   inputs = {
     typelevel-nix.url = "github:typelevel/typelevel-nix";
     nixpkgs.follows = "typelevel-nix/nixpkgs";
     flake-utils.follows = "typelevel-nix/flake-utils";
+    scala-dev.url = "github:ramytanios/nix-lib";
   };
 
-  outputs = { self, nixpkgs, typelevel-nix, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ typelevel-nix.overlay ];
+  outputs = { self, nixpkgs, typelevel-nix, flake-utils, scala-dev, ... }:
+    let
+      inherit (flake-utils.lib) mkApp;
+
+      pname = "watch";
+      version = if (self ? rev) then self.rev else "dirty";
+
+      eachSystem = nixpkgs.lib.genAttrs flake-utils.lib.defaultSystems;
+
+      mkPackages = pkgs:
+        scala-dev.lib.mkBuildScalaApp pkgs {
+          inherit version;
+          inherit pname;
+          src = ./src;
+          supported-platforms = [ "jvm" ];
+          sha256 = "sha256-ANX8vkLsBaIKPm8cO8rGM5VCVSILS8nDoP4xrjpQoeg=";
         };
-      in {
-        devShell = pkgs.devshell.mkShell {
-          imports = [ typelevel-nix.typelevelShell ];
-          name = "watch-shell";
-          typelevelShell = {
-            jdk.package = pkgs.jdk;
-            nodejs.enable = false;
-            native.enable = true;
-            native.libraries = with pkgs; [ zlib s2n-tls openssl ];
+
+      mkPckgs = system: import nixpkgs { inherit system; };
+
+    in {
+      # devshells
+      devShells = eachSystem (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ typelevel-nix.overlay ];
           };
-          packages = with pkgs; [ which ];
-        };
-      });
+        in {
+          default = pkgs.devshell.mkShell {
+            imports = [ typelevel-nix.typelevelShell ];
+            name = "watch-dev-shell";
+            typelevelShell = {
+              jdk.package = pkgs.jdk;
+              nodejs.enable = false;
+              native.enable = true;
+              native.libraries = with pkgs; [ zlib s2n-tls openssl ];
+            };
+            packages = with pkgs; [ which ];
+          };
+        });
+
+      # packages
+      packages = eachSystem (system: mkPackages (mkPckgs system));
+
+      # apps
+      apps = eachSystem (system:
+        builtins.mapAttrs (_: drv:
+          (mkApp {
+            inherit drv;
+            name = pname;
+          })) (mkPackages (mkPckgs system)));
+
+      #overlays
+      overlays = {
+        default = final: _: { ${pname} = (mkPackages final).jvm; };
+      };
+
+      # checks 
+      checks = self.packages;
+    };
 }

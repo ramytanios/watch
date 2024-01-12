@@ -61,7 +61,7 @@ object Argument:
   def apply(t: String): Argument = t
   extension (t: Argument) def value: String = t
 
-class AppImpl[F[_]: Processes: Temporal: Files: Console] {
+class AppImpl[F[_]: Processes: Temporal: Files: Console]:
 
   val C = Console[F]
 
@@ -131,7 +131,6 @@ class AppImpl[F[_]: Processes: Temporal: Files: Console] {
           .drain
           .background
           .as(())
-}
 
 object Main
     extends CommandIOApp(

@@ -2,6 +2,4 @@
 .bsp/
 .metals/
 .scala-build/
-test_dir/
-Makefile
-*.sh
+result

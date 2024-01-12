@@ -79,7 +79,23 @@
           "typelevel-nix",
           "nixpkgs"
         ],
+        "scala-dev": "scala-dev",
         "typelevel-nix": "typelevel-nix"
+      }
+    },
+    "scala-dev": {
+      "locked": {
+        "lastModified": 1705062385,
+        "narHash": "sha256-euccFHOefhDiOdjdM7Ea2lkFKA6vToPvHfwVUqSgh+Y=",
+        "owner": "ramytanios",
+        "repo": "nix-lib",
+        "rev": "75dc52581707b47e0bbd15934e02f61b4d18da44",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ramytanios",
+        "repo": "nix-lib",
+        "type": "github"
       }
     },
     "systems": {
