@@ -11,7 +11,7 @@
     let
       inherit (flake-utils.lib) mkApp;
 
-      pname = "fs2-watch";
+      pname = "watch";
       version = if (self ? rev) then self.rev else "dirty";
 
       eachSystem = nixpkgs.lib.genAttrs flake-utils.lib.defaultSystems;
@@ -38,7 +38,7 @@
         in {
           default = pkgs.devshell.mkShell {
             imports = [ typelevel-nix.typelevelShell ];
-            name = "fs2-watch-dev-shell";
+            name = "watch-dev-shell";
             typelevelShell = {
               jdk.package = pkgs.jdk;
               nodejs.enable = false;
