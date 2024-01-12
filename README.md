@@ -8,7 +8,7 @@ Based on the Scala  [typelevel](https://typelevel.org/) stack. ✅
 If you have [nix](https://nixos.org/download.html) installed and [flakes enabled](https://nixos.wiki/wiki/Flakes#Enable_flakes):
 
 ```shell
-nix run github:ramytanios/watch#jvm
+nix run github:ramytanios/watch#jvm --refresh
 ```
 
 For developing, there is a corresponding dev shell:
