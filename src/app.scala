@@ -12,6 +12,7 @@ import fs2.io.file.*
 import fs2.io.process
 import fs2.io.process.*
 
+import scala.cli.build.BuildInfo
 import scala.concurrent.duration.*
 import scala.io.AnsiColor
 
@@ -135,7 +136,8 @@ class AppImpl[F[_]: Processes: Temporal: Files: Console]:
 object Main
     extends CommandIOApp(
       name = "watch",
-      header = "Watch a directory and execute a command on change."
+      header = "Watch a directory and execute a command on change.",
+      version = BuildInfo.projectVersion.getOrElse("NA")
     ):
 
   val path = Opts
