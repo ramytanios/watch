@@ -1,5 +1,6 @@
 package watch
 
+import cats.ApplicativeThrow
 import cats.data.NonEmptyList
 import cats.effect.*
 import cats.effect.std.*
@@ -15,6 +16,7 @@ import fs2.io.process.*
 import scala.cli.build.BuildInfo
 import scala.concurrent.duration.*
 import scala.io.AnsiColor
+import scala.util.control.NoStackTrace
 
 // stream of notifications
 trait PathWatcher[F[_]]:
@@ -62,16 +64,25 @@ object Argument:
   def apply(t: String): Argument = t
   extension (t: Argument) def value: String = t
 
+class MissingCommand(override val getMessage: String) extends NoStackTrace
+
 class AppImpl[F[_]: Processes: Temporal: Files: Console]:
 
   val C = Console[F]
+
+  def ensureCommand(cmd: Command): F[Unit] =
+    ProcessBuilder("which", cmd.value).spawn.use: proc =>
+      proc.exitValue.flatMap: exv =>
+        ApplicativeThrow[F].raiseWhen(exv != 0)(
+          new MissingCommand(s"Command ${cmd.value} is not available")
+        )
 
   def run(
       path: Path,
       cmd: Command,
       args: Option[NonEmptyList[Argument]],
       debounceRate: FiniteDuration
-  ): Resource[F, Unit] = C
+  ): Resource[F, Unit] = ensureCommand(cmd).toResource *> C
     .print(
       s"""|👀 Started watching path ${path} with following with settings:${AnsiColor.CYAN}
       |👉Path: ${path}
