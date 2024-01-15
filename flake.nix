@@ -15,7 +15,7 @@
       version = pkgs:
         if (self ? rev) then
           pkgs.writeScriptBin "git-describe" ''
-            echo git describe 
+            echo $(git describe)
           ''
         else
           "dirty";
