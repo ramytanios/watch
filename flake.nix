@@ -12,14 +12,13 @@
       inherit (flake-utils.lib) mkApp;
 
       pname = "watch";
-      version = pkgs:
-        if (self ? rev) then self.shortRev else self.dirtyShortRev;
+      version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
 
       eachSystem = nixpkgs.lib.genAttrs flake-utils.lib.defaultSystems;
 
       mkPackages = pkgs:
         scala-dev.lib.mkBuildScalaApp pkgs {
-          version = version pkgs;
+          inherit version;
           inherit pname;
           src = ./src;
           supported-platforms = [ "jvm" ];
