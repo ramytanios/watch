@@ -12,13 +12,19 @@
       inherit (flake-utils.lib) mkApp;
 
       pname = "watch";
-      version = if (self ? rev) then self.rev else "dirty";
+      version = pkgs:
+        if (self ? rev) then
+          pkgs.writeScriptbin "git-describe" ''
+            echo git describe 
+          ''
+        else
+          "dirty";
 
       eachSystem = nixpkgs.lib.genAttrs flake-utils.lib.defaultSystems;
 
       mkPackages = pkgs:
         scala-dev.lib.mkBuildScalaApp pkgs {
-          inherit version;
+          version = version pkgs;
           inherit pname;
           src = ./src;
           supported-platforms = [ "jvm" ];
