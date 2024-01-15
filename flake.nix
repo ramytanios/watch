@@ -14,7 +14,7 @@
       pname = "watch";
       version = pkgs:
         if (self ? rev) then
-          pkgs.writeScriptbin "git-describe" ''
+          pkgs.writeScriptBin "git-describe" ''
             echo git describe 
           ''
         else
