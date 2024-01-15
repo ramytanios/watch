@@ -13,12 +13,7 @@
 
       pname = "watch";
       version = pkgs:
-        if (self ? rev) then
-          pkgs.writeScriptBin "git-describe" ''
-            echo $(git describe)
-          ''
-        else
-          "dirty";
+        if (self ? rev) then self.shortRev else self.dirtyShortRev;
 
       eachSystem = nixpkgs.lib.genAttrs flake-utils.lib.defaultSystems;
 
